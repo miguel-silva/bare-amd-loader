@@ -1,11 +1,8 @@
-# Bare AMD Loader
-
-[![NPM version](https://img.shields.io/npm/v/bare-amd-loader)](https://www.npmjs.com/package/bare-amd-loader)
-[![Size](https://img.shields.io/bundlephobia/minzip/bare-amd-loader)](https://bundlephobia.com/result?p=bare-amd-loader)
+# Bare AMD Loader · [![NPM version](https://img.shields.io/npm/v/bare-amd-loader)](https://www.npmjs.com/package/bare-amd-loader) [![Size](https://img.shields.io/bundlephobia/minzip/bare-amd-loader)](https://bundlephobia.com/result?p=bare-amd-loader)
 
 Simple **A**synchronous **M**odule **D**efinition loader dedicated to **bare module specifier support**.
 
-It tries to be the smallest (~1KB min+gzip) AMD loader that:
+It tries to be the smallest AMD loader that:
 
 - uses a Promise-based API
 - supports parallel module loading
@@ -124,9 +121,9 @@ Unfortunately, for me and a lot of other developers that don't live on the edge,
   - oldest ES version to support
   - how much of the dependency tree comes bundled-in
 
-This means that, even nowadays, using [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) might the format that covers scenarios like [Extendable Apps](#extendable-apps), since:
+This means that, even nowadays, using [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) as a module format for app extensions might be what we need, since:
 
-- still support some non evergreen browsers, like IE11
+- loaders can still support some non evergreen browsers, like IE11
 - wide third-party module support, since they are very frequently published as UMD, which is compatible with the AMD spec
 - not only that, but third-party UMD modules have become quite normalized:
   - usually transpiled down to ES5
@@ -137,7 +134,7 @@ This means that, even nowadays, using [AMD](https://github.com/amdjs/amdjs-api/w
 There are plenty of AMD loaders out there. After searching for the right one, I found out that they usually fall into 2 categories:
 
 1. Complete, multi-purpose AMD loaders, like [RequireJS](https://requirejs.org/), many of them fit for supporting [Extendable Apps](#extendable-apps). But most of those features were built for the era that pre-dated bundlers, making the respective library much heavier then we need them too.
-2. Small, lazer-focused AMD loaders but that don't support **bare module specifiers**, which is a no-go since most of our day-to-day dependencies are named in that manner.
+2. Small, laser-focused AMD loaders but that don't support **bare module specifiers**, which is a no-go since most of our day-to-day dependencies are named in that manner.
 
 Given that the ecosystem wasn't catering for my specific requirements, I decided to build `bare-amd-loader`.
 
