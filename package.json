@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "main": "dist/index.js",
   "module": "dist/bare-amd-loader.esm.js",
+  "unpkg": "dist/bare-amd-loader.umd.production.min.js",
   "typings": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
     "start": "tsdx watch",
-    "build": "tsdx build",
+    "build": "tsdx build --format cjs,esm,umd",
     "test": "tsdx test",
     "lint": "tsdx lint"
   },
