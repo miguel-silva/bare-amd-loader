@@ -24,59 +24,59 @@ describe("load()", () => {
     ]);
 
     mockScriptLoading(paths, [
-      { name: "dummy", dependencies: ["remoteDep1", "remoteDep2"] },
-      { name: "remoteDep1", dependencies: ["remoteDep2", "localDep1"] },
-      { name: "remoteDep2", dependencies: ["remoteDep3"] },
-      { name: "remoteDep3" },
+      { id: "dummy", dependencies: ["remoteDep1", "remoteDep2"] },
+      { id: "remoteDep1", dependencies: ["remoteDep2", "localDep1"] },
+      { id: "remoteDep2", dependencies: ["remoteDep3"] },
+      { id: "remoteDep3" },
     ]);
 
+    //#region expected dummy and related dependencies
     const localDep1 = {
-      name: "localDep1",
+      id: "localDep1",
     };
+
+    const remoteDep2 = {
+      id: "remoteDep2",
+      args: [
+        {
+          id: "remoteDep3",
+        },
+      ],
+    };
+
+    const dummy = {
+      id: "dummy",
+      args: [
+        {
+          id: "remoteDep1",
+          args: [remoteDep2, localDep1],
+        },
+        remoteDep2,
+      ],
+    };
+    //#endregion expected dummy and related dependencies
 
     const result = await load("dummy", {
       paths,
       modules: { localDep1 },
     });
 
+    // one for each path
     expect(mockedLoadScript).toHaveBeenCalledTimes(4);
 
-    expect(result).toMatchInlineSnapshot(`
-      Object {
-        "deps": Array [
-          Object {
-            "deps": Array [
-              Object {
-                "deps": Array [
-                  Object {
-                    "name": "remoteDep3",
-                  },
-                ],
-                "name": "remoteDep2",
-              },
-              Object {
-                "name": "localDep1",
-              },
-            ],
-            "name": "remoteDep1",
-          },
-          Object {
-            "deps": Array [
-              Object {
-                "name": "remoteDep3",
-              },
-            ],
-            "name": "remoteDep2",
-          },
-        ],
-        "name": "dummy",
-      }
-    `);
+    expect(result).toEqual(dummy);
   });
 });
 
 type Paths = { [moduleId: string]: string };
 
+/**
+ * given a list of module ids, create a list of unique Paths
+ *
+ * they need to be unique so that tests are independent from each other, due to the shared cache
+ *
+ * @param modules
+ */
 function createUniquePaths(modules: string[]): Paths {
   return modules.reduce((paths: Paths, moduleName: string) => {
     paths[moduleName] = `${moduleName}-${nanoid()}.js`;
@@ -89,29 +89,40 @@ const globalDefine = window.define;
 
 type ModuleDefinitionArgs = [string[], (...args: any[]) => any] | [() => any];
 
+/**
+ * mock loadScript implementation,
+ * mapping each partialModuleDefinition into simple factories
+ * that generate an object with:
+ * - id: string - the module id
+ * - args?: any[] - the factory's arguments
+ *
+ * @param paths
+ * @param partialModuleDefinitions
+ */
 function mockScriptLoading(
   paths: Paths,
-  partialModuleDefinitions: { name: string; dependencies?: string[] }[]
+  partialModuleDefinitions: { id: string; dependencies?: string[] }[]
 ) {
   const moduleDefinitionArgsBySrc: {
     [src: string]: ModuleDefinitionArgs;
   } = {};
 
-  partialModuleDefinitions.forEach(({ name, dependencies }) => {
-    const src = paths[name];
+  // create moduleDefinitionArgsBySrc from paths and partialModuleDefinitions
+  partialModuleDefinitions.forEach(({ id, dependencies }) => {
+    const src = paths[id];
 
     let moduleDefinitionArgs: ModuleDefinitionArgs;
 
     if (dependencies) {
       moduleDefinitionArgs = [
         dependencies,
-        (...deps: any[]) => ({
-          name,
-          deps,
+        (...args: any[]) => ({
+          id,
+          args,
         }),
       ];
     } else {
-      moduleDefinitionArgs = [() => ({ name })];
+      moduleDefinitionArgs = [() => ({ id })];
     }
 
     moduleDefinitionArgsBySrc[src] = moduleDefinitionArgs;
