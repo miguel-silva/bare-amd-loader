@@ -1,6 +1,6 @@
 {
   "name": "bare-amd-loader",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/index.js",
   "module": "dist/bare-amd-loader.esm.js",
   "unpkg": "dist/bare-amd-loader.umd.production.min.js",
