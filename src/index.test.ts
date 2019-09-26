@@ -66,6 +66,47 @@ describe("load()", () => {
 
     expect(result).toEqual(dummy);
   });
+
+  test(`successfully loads the modules named "dummy1" and "dummy2"`, async () => {
+    const paths = createUniquePaths([
+      "dummy1",
+      "dummy2",
+      "remoteDep1",
+      "remoteDep2",
+    ]);
+
+    mockScriptLoading(paths, [
+      { id: "dummy1", dependencies: ["remoteDep1"] },
+      { id: "dummy2", dependencies: ["remoteDep1", "remoteDep2"] },
+      { id: "remoteDep1" },
+      { id: "remoteDep2" },
+    ]);
+
+    //#region expected dummy modules and related dependencies
+    const remoteDep1 = {
+      id: "remoteDep1",
+    };
+
+    const dummy1 = {
+      id: "dummy1",
+      args: [remoteDep1],
+    };
+
+    const dummy2 = {
+      id: "dummy2",
+      args: [remoteDep1, { id: "remoteDep2" }],
+    };
+    //#endregion expected dummy modules and related dependencies
+
+    const result = await load(["dummy1", "dummy2"], {
+      paths,
+    });
+
+    // one for each path
+    expect(mockedLoadScript).toHaveBeenCalledTimes(4);
+
+    expect(result).toEqual([dummy1, dummy2]);
+  });
 });
 
 type Paths = { [moduleId: string]: string };
