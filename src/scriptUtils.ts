@@ -5,9 +5,9 @@ export function loadScript(
   onLoad: () => void,
   onError: () => void
 ) {
-  const script = document.createElement('script');
+  const script = document.createElement("script");
 
-  script.crossOrigin = 'anonymous';
+  script.crossOrigin = "anonymous";
 
   script.onload = () => {
     onLoad();

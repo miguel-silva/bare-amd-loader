@@ -1,4 +1,4 @@
-import { loadScript } from './scriptUtils';
+import { loadScript } from "./scriptUtils";
 
 export type Config = {
   paths: { [moduleId: string]: string };
@@ -9,7 +9,7 @@ type Context = {
   modulePromiseById: {
     [moduleId: string]: Promise<any>;
   };
-} & Omit<Config, 'modules'>;
+} & Omit<Config, "modules">;
 
 type Factory = (...args: any[]) => any;
 
@@ -75,6 +75,12 @@ function loadModuleWithContext(
   // start module loading
   modulePromise = new Promise((resolveModule, rejectModule) => {
     const filePath = paths[moduleId];
+
+    if (!filePath) {
+      rejectModule(new Error(`${moduleId} is missing from config`));
+      return;
+    }
+
     let definitionPromise: Promise<Definition>;
 
     if (definitionPromiseByPath.has(filePath)) {
@@ -88,7 +94,7 @@ function loadModuleWithContext(
           // onLoad
           () => {
             if (!pendingDefinition) {
-              rejectFile(`${filePath} is not an AMD module`);
+              rejectFile(new Error(`${filePath} is not an AMD module`));
               return;
             }
 
@@ -99,7 +105,7 @@ function loadModuleWithContext(
           },
           // onError
           () => {
-            rejectFile(`${filePath} loading failed`);
+            rejectFile(new Error(`${filePath} loading failed`));
           }
         );
       });
@@ -120,7 +126,7 @@ function loadModuleWithContext(
           moduleFactoryArgs = await Promise.all(
             definition.dependencies.map(dependencyId => {
               // special exports dependency
-              if (dependencyId === 'exports') {
+              if (dependencyId === "exports") {
                 return Promise.resolve(exportsDependency);
               }
               return loadModuleWithContext(dependencyId, context);
@@ -159,7 +165,7 @@ function define(
   let dependencies: string[] | undefined, factory: Factory;
 
   // is firstArg the id?
-  if (typeof firstArg === 'string') {
+  if (typeof firstArg === "string") {
     // is secondArg the dependency Array?
     if (Array.isArray(secondArg)) {
       // define(id, dependencies, factory)
