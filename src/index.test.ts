@@ -15,7 +15,7 @@ describe("load()", () => {
     jest.resetAllMocks();
   });
 
-  test(`successfully loads a single module named "dummy"`, async () => {
+  test("successfully loads a single module", async () => {
     const paths = createUniquePaths([
       "dummy",
       "remoteDep1",
@@ -67,7 +67,31 @@ describe("load()", () => {
     expect(result).toEqual(dummy);
   });
 
-  test(`successfully loads the modules named "dummy1" and "dummy2"`, async () => {
+  test("successfully loads the same module in consecutive calls", async () => {
+    const paths = createUniquePaths(["dummy"]);
+
+    mockScriptLoading(paths, [{ id: "dummy" }]);
+
+    const dummy = {
+      id: "dummy",
+    };
+
+    const result1 = await load("dummy", {
+      paths,
+    });
+
+    const result2 = await load("dummy", {
+      paths,
+    });
+
+    // only inject a script once
+    expect(mockedLoadScript).toHaveBeenCalledTimes(1);
+
+    expect(result1).toEqual(dummy);
+    expect(result1).toEqual(result2);
+  });
+
+  test("successfully loads multiple modules in the same call", async () => {
     const paths = createUniquePaths([
       "dummy1",
       "dummy2",
@@ -101,6 +125,52 @@ describe("load()", () => {
     const result = await load(["dummy1", "dummy2"], {
       paths,
     });
+
+    // one for each path
+    expect(mockedLoadScript).toHaveBeenCalledTimes(4);
+
+    expect(result).toEqual([dummy1, dummy2]);
+  });
+
+  test("successfully loads multiple modules in parallel calls", async () => {
+    const paths = createUniquePaths([
+      "dummy1",
+      "dummy2",
+      "remoteDep1",
+      "remoteDep2",
+    ]);
+
+    mockScriptLoading(paths, [
+      { id: "dummy1", dependencies: ["remoteDep1"] },
+      { id: "dummy2", dependencies: ["remoteDep1", "remoteDep2"] },
+      { id: "remoteDep1" },
+      { id: "remoteDep2" },
+    ]);
+
+    //#region expected dummy modules and related dependencies
+    const remoteDep1 = {
+      id: "remoteDep1",
+    };
+
+    const dummy1 = {
+      id: "dummy1",
+      args: [remoteDep1],
+    };
+
+    const dummy2 = {
+      id: "dummy2",
+      args: [remoteDep1, { id: "remoteDep2" }],
+    };
+    //#endregion expected dummy modules and related dependencies
+
+    const result = await Promise.all([
+      load("dummy1", {
+        paths,
+      }),
+      load("dummy2", {
+        paths,
+      }),
+    ]);
 
     // one for each path
     expect(mockedLoadScript).toHaveBeenCalledTimes(4);
