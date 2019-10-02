@@ -1,6 +1,15 @@
 {
   "name": "bare-amd-loader",
   "version": "0.1.1",
+  "description": "Simple AMD loader dedicated to bare module specifier support.",
+  "keywords": [
+    "amd",
+    "loader",
+    "module"
+  ],
+  "license": "MIT",
+  "repository": "github:miguel-silva/bare-amd-loader",
+  "bugs": "https://github.com/miguel-silva/bare-amd-loader/issues",
   "main": "dist/index.js",
   "module": "dist/bare-amd-loader.esm.js",
   "unpkg": "dist/bare-amd-loader.umd.production.min.js",
@@ -14,7 +23,6 @@
     "test": "tsdx test",
     "lint": "tsdx lint"
   },
-  "license": "MIT",
   "peerDependencies": {},
   "husky": {
     "hooks": {
