@@ -177,6 +177,77 @@ describe("load()", () => {
 
     expect(result).toEqual([dummy1, dummy2]);
   });
+
+  test("throws an error when trying to load a module not specified the config", async () => {
+    const paths = createUniquePaths(["dummy", "remoteDep1"]);
+
+    mockScriptLoading(paths, [
+      { id: "dummy", dependencies: ["remoteDep1"] },
+      { id: "remoteDep1", dependencies: ["missingDep"] },
+    ]);
+
+    await expect(load("dummy", { paths })).rejects.toMatchInlineSnapshot(
+      `[Error: missingDep is missing from config]`
+    );
+  });
+
+  test("throws an error when failing to load a module", async () => {
+    const paths = createUniquePaths(["dummy"]);
+
+    paths.failedDep = "failedDep.js";
+
+    mockScriptLoading(paths, [{ id: "dummy", dependencies: ["failedDep"] }]);
+
+    await expect(load("dummy", { paths })).rejects.toMatchInlineSnapshot(
+      `[Error: failedDep.js loading failed]`
+    );
+  });
+
+  test("throws an error when trying to load a module that is not an AMD module", async () => {
+    const paths = createUniquePaths(["dummy"]);
+
+    paths.notAMDDep = "notAMDDep.js";
+
+    mockedLoadScript.mockImplementation(
+      (src: string, onLoad: () => void, _onError: () => void) => {
+        if (src === paths.dummy) {
+          globalDefine(["notAMDDep"], () => {
+            return 42;
+          });
+        }
+        onLoad();
+      }
+    );
+
+    await expect(load("dummy", { paths })).rejects.toMatchInlineSnapshot(
+      `[Error: notAMDDep.js is not an AMD module]`
+    );
+  });
+
+  test("throws an error when the loaded module factory has an exception", async () => {
+    const paths = createUniquePaths(["dummy"]);
+
+    paths.exceptionDep = "exceptionDep.js";
+
+    mockedLoadScript.mockImplementation(
+      (src: string, onLoad: () => void, _onError: () => void) => {
+        if (src === paths.dummy) {
+          globalDefine(["exceptionDep"], () => {
+            return 42;
+          });
+        } else {
+          globalDefine(() => {
+            throw new Error("Ups!");
+          });
+        }
+        onLoad();
+      }
+    );
+
+    await expect(load("dummy", { paths })).rejects.toMatchInlineSnapshot(
+      `[Error: Ups!]`
+    );
+  });
 });
 
 type Paths = { [moduleId: string]: string };
