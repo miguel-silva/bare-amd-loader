@@ -24,7 +24,7 @@ describe("load()", () => {
     ]);
 
     mockScriptLoading(paths, [
-      { id: "dummy", dependencies: ["remoteDep1", "remoteDep2"] },
+      { id: "dummy", dependencies: ["exports", "remoteDep1", "remoteDep2"] },
       { id: "remoteDep1", dependencies: ["remoteDep2", "localDep1"] },
       { id: "remoteDep2", dependencies: ["remoteDep3"] },
       { id: "remoteDep3" },
@@ -211,7 +211,7 @@ describe("load()", () => {
     mockedLoadScript.mockImplementation(
       (src: string, onLoad: () => void, _onError: () => void) => {
         if (src === paths.dummy) {
-          globalDefine(["notAMDDep"], () => {
+          globalDefine("dummy", ["notAMDDep"], () => {
             return 42;
           });
         }
@@ -232,11 +232,11 @@ describe("load()", () => {
     mockedLoadScript.mockImplementation(
       (src: string, onLoad: () => void, _onError: () => void) => {
         if (src === paths.dummy) {
-          globalDefine(["exceptionDep"], () => {
+          globalDefine(["dummy", "exceptionDep"], () => {
             return 42;
           });
         } else {
-          globalDefine(() => {
+          globalDefine("exceptionDep", () => {
             throw new Error("Ups!");
           });
         }
@@ -296,12 +296,27 @@ function mockScriptLoading(
     let moduleDefinitionArgs: ModuleDefinitionArgs;
 
     if (dependencies) {
+      const indexOfExportsDep = dependencies.indexOf("exports");
+
       moduleDefinitionArgs = [
         dependencies,
-        (...args: any[]) => ({
-          id,
-          args,
-        }),
+        (...args: any[]) => {
+          const result = {
+            id,
+            args,
+          };
+
+          if (indexOfExportsDep === -1) {
+            return result;
+          }
+
+          const [exportsDep] = args.splice(indexOfExportsDep, 1);
+
+          // assign to exports dependency instead of returning the result
+          Object.assign(exportsDep, result);
+
+          return;
+        },
       ];
     } else {
       moduleDefinitionArgs = [() => ({ id })];
