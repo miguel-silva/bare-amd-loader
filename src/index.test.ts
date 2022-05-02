@@ -58,7 +58,13 @@ describe("load()", () => {
 
     const result = await load("dummy", {
       paths,
-      modules: { localDep1 },
+      fallbackLoader: name => {
+        if (name === "localDep1") {
+          return Promise.resolve(localDep1);
+        }
+
+        return Promise.reject(`no fallback available to ${name}`);
+      },
     });
 
     // one for each path

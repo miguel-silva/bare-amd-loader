@@ -21,9 +21,9 @@
     "start": "tsdx watch",
     "build": "tsdx build --format cjs,esm,umd",
     "test": "tsdx test",
-    "lint": "tsdx lint"
+    "lint": "tsdx lint",
+    "prepare": "npm run build"
   },
-  "peerDependencies": {},
   "husky": {
     "hooks": {
       "pre-commit": "pretty-quick --staged"
@@ -38,8 +38,8 @@
     "nanoid": "^2.1.1",
     "prettier": "^1.18.2",
     "pretty-quick": "^1.11.1",
-    "tsdx": "^0.9.0",
-    "tslib": "^1.10.0",
-    "typescript": "^3.5.3"
+    "tsdx": "^0.14.1",
+    "tslib": "^2.3.1",
+    "typescript": "^4.6.3"
   }
 }

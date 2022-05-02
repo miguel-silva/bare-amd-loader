@@ -2,14 +2,14 @@ import { loadScript } from "./scriptUtils";
 
 export type Config = {
   paths: { [moduleId: string]: string };
-  modules?: { [moduleId: string]: any };
+  fallbackLoader?: (moduleId: string) => Promise<any>;
 };
 
 type Context = {
   modulePromiseById: {
     [moduleId: string]: Promise<any>;
   };
-} & Omit<Config, "modules">;
+} & Config;
 
 type Factory = (...args: any[]) => any;
 
@@ -20,7 +20,15 @@ type Definition = {
 
 let pendingDefinition: Definition | undefined;
 
+/**
+ * Global module definition (AMD) cache.
+ */
 const definitionPromiseByPath = new Map<string, Promise<Definition>>();
+
+const emptyDefinition: Definition = {
+  factory: () => {},
+  dependencies: [],
+};
 
 /**
  * Load one or multiple AMD modules, in a promise like interface.
@@ -36,14 +44,8 @@ export function load(modules: string | string[], config: Config): Promise<any> {
     [moduleId: string]: Promise<any>;
   } = {};
 
-  if (config.modules) {
-    Object.entries(config.modules).forEach(([moduleId, moduleContent]) => {
-      modulePromiseById[moduleId] = Promise.resolve(moduleContent);
-    });
-  }
-
   const context: Context = {
-    paths: config.paths,
+    ...config,
     modulePromiseById,
   };
 
@@ -77,6 +79,14 @@ function loadModuleWithContext(
     const filePath = paths[moduleId];
 
     if (!filePath) {
+      if (context.fallbackLoader) {
+        context
+          .fallbackLoader(moduleId)
+          .then(resolveModule)
+          .catch(rejectModule);
+        return;
+      }
+
       rejectModule(new Error(`${moduleId} is missing from config`));
       return;
     }
@@ -94,7 +104,8 @@ function loadModuleWithContext(
           // onLoad
           () => {
             if (!pendingDefinition) {
-              rejectFile(new Error(`${filePath} is not an AMD module`));
+              resolveFile(emptyDefinition);
+              // rejectFile(new Error(`${filePath} is not an AMD module`));
               return;
             }
 
@@ -105,6 +116,8 @@ function loadModuleWithContext(
           },
           // onError
           () => {
+            // clear failed definition promise for future sessions
+            definitionPromiseByPath.delete(filePath);
             rejectFile(new Error(`${filePath} loading failed`));
           }
         );
